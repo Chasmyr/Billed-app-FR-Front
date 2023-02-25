@@ -5,14 +5,16 @@
 import {screen, waitFor} from "@testing-library/dom"
 import BillsUI from "../views/BillsUI.js"
 import { bills } from "../fixtures/bills.js"
-import { ROUTES_PATH} from "../constants/routes.js";
-import {localStorageMock} from "../__mocks__/localStorage.js";
-
+import { ROUTES_PATH, ROUTES} from "../constants/routes.js";
+import { localStorageMock } from "../__mocks__/localStorage.js";
+import mockStore from "../__mocks__/store"
 import router from "../app/Router.js";
+import userEvent from "@testing-library/user-event";
+import Bills from "../containers/Bills.js";
 
 describe("Given I am connected as an employee", () => {
   describe("When I am on Bills Page", () => {
-    test("Then bill icon in vertical layout should be highlighted", async () => {
+    test("Then bill icon in vertical layout should be highlighted", () => {
 
       Object.defineProperty(window, 'localStorage', { value: localStorageMock })
       window.localStorage.setItem('user', JSON.stringify({
@@ -23,9 +25,10 @@ describe("Given I am connected as an employee", () => {
       document.body.append(root)
       router()
       window.onNavigate(ROUTES_PATH.Bills)
-      await waitFor(() => screen.getByTestId('icon-window'))
-      const windowIcon = screen.getByTestId('icon-window')
-      //to-do write expect expression
+      const windowIcon = screen.getByTestId('icon-window') 
+      // grace a l'inspecteur ou vois que l'icon necessite la class "active-icon" pour etre surligner https://github.com/testing-library/jest-dom#tohaveclass
+      // cela ne fonctionne pas je me retrouve avec "TypeError: expect(...).toHaveClass is not a function"
+      expect(windowIcon.classList.contains('active-icon')).toBe(true)
 
     })
     test("Then bills should be ordered from earliest to latest", () => {
@@ -36,4 +39,141 @@ describe("Given I am connected as an employee", () => {
       expect(dates).toEqual(datesSorted)
     })
   })
+  // ajout des autres tests pour avoir au minimum 80% de couverture
+  // faire des test des différentes fonctionnalités et messages d'erreur, également les appelle api
+  // test pour le bouton qui affiche le justificatif
+  describe("When I click on the actions icon", () => {
+    test("Then a modal should open", () => {
+      // il faut simuler l'intégration, ajouter les event listener, cliquer dessus, puis tester
+      // constuire le dom
+      const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname})
+      }
+
+      Object.defineProperty(window, 'localStorage', {value: localStorageMock})
+      window.localStorage.setItem('user', JSON.stringify({
+        type: 'Employee'
+      }))
+
+      const bills = new Bills({
+        document, onNavigate, store: null, localStorage: window.localStorage
+      })
+
+      document.body.innerHTML = BillsUI({ data: bills })
+
+      // récupération des éléments du dom
+      const actionIcons = document.querySelectorAll(`div[data-testid="icon-eye"]`)
+      const modal = document.getElementById('modaleFile')
+
+      // création de l'event listener
+      actionIcons.forEach(actionIcon => {
+        const handleClickOnActionIcon = jest.fn(bills.handleClickIconEye(actionIcon))
+        actionIcon.addEventListener('click', handleClickOnActionIcon)
+        userEvent.click(actionIcon)
+
+        expect(bills.handleClickIconEye).toHaveBeenCalled()
+        expect(modal.classList.contains('show')).toBe(true)
+      });
+    })
+  })
+  
+  // tester la navigation pour la route new bill
+  describe("When i click on the new bill button", () => {
+    test("Then it should navigate to NewBill", () => {
+
+      // constuire le dom
+      const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname})
+      }
+
+      Object.defineProperty(window, 'localStorage', {value: localStorageMock})
+      window.localStorage.setItem('user', JSON.stringify({
+        type: 'Employee'
+      }))
+
+      const bills = new Bills({
+        document, onNavigate, store: null, localStorage: window.localStorage
+      })
+
+      document.body.innerHTML = BillsUI({ data: bills })
+
+      // récupération des éléments du dom
+      const buttonNewBill = document.querySelector(`button[data-testid="btn-new-bill"]`)
+
+      // création de l'event listner
+      const handleNavigateToNewBill = jest.fn(bills.handleClickNewBill)
+      buttonNewBill.addEventListener('click', handleNavigateToNewBill)
+      userEvent.click(buttonNewBill)
+
+      expect(handleNavigateToNewBill).toHaveBeenCalled()
+    })
+  })
+
+  describe("When i am on the bills page and it's loading", () => {
+    test("Then the loading page should be rendered", async () => {
+      
+      // création du dom durant le loading
+      document.body.innerHTML = BillsUI({loading: true})
+
+      expect(document.getElementById('loading')).toBeDefined()
+      expect(document.getElementById('loading').innerHTML).toMatch('Loading...')
+    })
+  })
+
+  describe("When i am on the bills page but there is an error", () => {
+    test("Then the error page should be rendered", async () => {
+      
+      // création du dom durant le loading
+      document.body.innerHTML = BillsUI({error: "erreur"})
+
+      const errorNode = document.querySelector(`div[data-testid="error-message"]`)
+
+      expect(errorNode).toBeDefined()
+      expect(errorNode.innerHTML).toMatch('erreur')
+
+      document.body.innerHTML = ""
+    })
+  })
+
+  // test l'api
+  describe("When i am on the bills page", () => {
+    describe("the api is fetched", () => {
+
+      describe("the api return a error message", () => {
+
+        beforeEach(() => {
+          jest.spyOn(mockStore, "bills")
+          Object.defineProperty(
+              window,
+              'localStorage',
+              { value: localStorageMock }
+          )
+          window.localStorage.setItem('user', JSON.stringify({
+            type: 'Employee'
+          }))
+          const root = document.createElement("div")
+          root.setAttribute("id", "root")
+          document.body.appendChild(root)
+          router()
+        })
+
+        test("the error message is a 404", async () => {
+          mockStore.bills.mockImplementationOnce(() => {
+            return {
+              list : () =>  {
+                return Promise.reject(new Error("Erreur 404"))
+              }
+            }
+          })
+          window.onNavigate(ROUTES_PATH.Bills)
+          await new Promise(process.nextTick)
+          const message = screen.getByText(/Erreur 404/)
+          expect(message).toBeTruthy()
+        })
+      })
+    })
+  })
 })
+
+
+
