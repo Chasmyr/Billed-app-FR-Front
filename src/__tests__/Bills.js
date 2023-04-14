@@ -139,6 +139,44 @@ describe("Given I am connected as an employee", () => {
   describe("When i am on the bills page", () => {
     describe("the api is fetched", () => {
 
+      // beforeEach(() => {
+      //   Object.defineProperty(
+      //       window,
+      //       'localStorage',
+      //       { value: localStorageMock }
+      //   )
+      //   window.localStorage.setItem('user', JSON.stringify({
+      //     type: 'Employee',
+      //     email: "a@a"
+      //   }))
+      //   const root = document.createElement("div")
+      //   root.setAttribute("id", "root")
+      //   document.body.appendChild(root)
+      //   router()
+      //   window.onNavigate(ROUTES_PATH.Bills)
+      // })
+
+      // ajout test si tout se passe bien
+      // test("fetches bills from mock API GET", async () => {
+      //   localStorage.setItem("user", JSON.stringify({ type: "Admin", email: "a@a" }));
+      //   const root = document.createElement("div")
+      //   root.setAttribute("id", "root")
+      //   document.body.append(root)
+      //   router()
+      //   window.onNavigate(ROUTES_PATH.Bills)
+
+      //   await waitFor(() => screen.getByText("Mes notes de frais"))
+      //   const newBillBtn = await screen.findByRole("button", {
+      //     name: /nouvelle note de frais/,
+      //   })
+        
+      //   const billsTableRows = screen.getByTestId("tbody")
+
+      //   expect(newBillBtn).toBeTruthy()
+      //   expect(billsTableRows).toBeTruthy()
+      //   expect(within(billsTableRows).getAllByRole("row")).toHaveLength(4)
+      // })
+
       describe("the api return a error message", () => {
 
         beforeEach(() => {
@@ -149,7 +187,8 @@ describe("Given I am connected as an employee", () => {
               { value: localStorageMock }
           )
           window.localStorage.setItem('user', JSON.stringify({
-            type: 'Employee'
+            type: 'Employee',
+            email: "a@a"
           }))
           const root = document.createElement("div")
           root.setAttribute("id", "root")
@@ -158,7 +197,7 @@ describe("Given I am connected as an employee", () => {
         })
 
         test("the error message is a 404", async () => {
-          mockStore.bills.mockImplementationOnce(() => {
+          mockStore.bills(() => {
             return {
               list : () =>  {
                 return Promise.reject(new Error("Erreur 404"))
@@ -167,9 +206,11 @@ describe("Given I am connected as an employee", () => {
           })
           window.onNavigate(ROUTES_PATH.Bills)
           await new Promise(process.nextTick)
-          const message = screen.getByText(/Erreur 404/)
+          const message = await screen.getByText(/Erreur 404/)
           expect(message).toBeTruthy()
         })
+
+        // ajout erreur 500
       })
     })
   })
