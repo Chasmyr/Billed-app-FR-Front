@@ -148,6 +148,7 @@ export default class {
     // si l'on ne supprime pas l'event listener avant de le rajouter
     // la fonction va etre appelé deux fois et donc le ticket va s'ouvrir puis se refermer
     // utilisation de jquerry pour respecter la base de code https://api.jquery.com/on/
+    // bug fix
     bills.forEach(bill => {
       $(`#open-bill${bill.id}`).off("click")
       $(`#open-bill${bill.id}`).on("click", e => this.handleEditTicket(e, bill, bills))

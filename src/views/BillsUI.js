@@ -21,7 +21,7 @@ const row = (bill) => {
 
 const rows = (data) => {
   // ajout du tri en fonction de la date
-  console.log(data)
+  // bug fix
   return (data && data.length) ? data.sort((a, b) => new Date(b.date) - new Date(a.date)).map(bill => row(bill)).join("") : ""
 }
 
