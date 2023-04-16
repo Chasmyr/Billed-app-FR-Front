@@ -58,7 +58,7 @@ describe("Given I am connected as an employee", () => {
         type: 'Employee'
       }))
 
-      const billsPage = new Bills({
+      const billsP = new Bills({
         document, onNavigate, store: mockStore, localStorage: window.localStorage
       })
 
@@ -67,7 +67,7 @@ describe("Given I am connected as an employee", () => {
       // récupération des éléments du dom
       // Unable to find an element by: [data-testid="icon-eye"]
       const actionIcons = document.querySelectorAll(`div[data-testid="icon-eye"]`)
-      const handleClickIconEye = jest.fn(billsPage.handleClickIconEye)
+      const handleClickIconEye = jest.fn(billsP.handleClickIconEye)
       const modal = document.getElementById('modaleFile')
       $.fn.modal = jest.fn(() => modal.classList.add("show"))
 
@@ -96,7 +96,7 @@ describe("Given I am connected as an employee", () => {
         type: 'Employee'
       }))
 
-      const billsPage = new Bills({
+      const billsP = new Bills({
         document, onNavigate, store: mockStore, localStorage: window.localStorage
       })
 
@@ -107,7 +107,7 @@ describe("Given I am connected as an employee", () => {
       expect(buttonNewBill).toBeTruthy()
 
       // création de l'event listner
-      const handleNavigateToNewBill = jest.fn(billsPage.handleClickNewBill)
+      const handleNavigateToNewBill = jest.fn(billsP.handleClickNewBill)
       buttonNewBill.addEventListener('click', handleNavigateToNewBill)
       userEvent.click(buttonNewBill)
 
