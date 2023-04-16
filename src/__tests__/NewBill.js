@@ -150,10 +150,6 @@ describe("Given I am connected as an employee", () => {
     describe("When the file type isnt jpg, jpeg or png ", () => {
       test("Then i should stay on the new bill page", async () => {
 
-        const onNavigate = pathname => {
-          document.body.innerHTML = ROUTES({ pathname })
-        }
-
         const newBill = new NewBill({
           document, onNavigate, store: mockStore, localStorage: window.localStorage
         })
