@@ -39,9 +39,8 @@ beforeEach(() => {
 })
 
 // a éxecuter apres chaque test
-// reset les mocks et l'html du body pour éviter tout conflit
+// reset l'html du body pour éviter tout conflit
 afterEach(() => { 
-  jest.resetAllMocks()
   document.body.innerHTML = ""
 })
 
@@ -54,14 +53,12 @@ describe("Given I am connected as an employee", () => {
     })
 
     describe("When i fill the form with correct data", () => {
-
       test("Then there should be a submit button", () => {
         const submitButton = document.getElementById("btn-send-bill")
         expect(submitButton.innerHTML).toEqual("Envoyer")
       })
 
       describe("When i click on the submit button", () => {
-
         test("Then the data should be in the right format and i should get back on the bill page", async () => {
           const onNavigate = pathname => {
             document.body.innerHTML = ROUTES({ pathname })
@@ -71,10 +68,9 @@ describe("Given I am connected as an employee", () => {
           
           // récupération de la fixture ainsi que tout les élements du dom necessaire
           const billFixture = bills[0]
-          const submitButton = document.getElementById("btn-send-bill")
           const form = screen.getByTestId("form-new-bill")
           const handleSubmit = jest.fn(newBill.handleSubmit)
-          const imageSelect = screen.getByTestId("file")
+          const fileSelect = screen.getByTestId("file")
           const file = new File(["img"], billFixture.fileName, {type: ["image/jpg"]})
           const select = screen.getByRole("combobox")
           const expense = screen.getByTestId("expense-name")
@@ -95,7 +91,7 @@ describe("Given I am connected as an employee", () => {
           userEvent.type(vat, billFixture.vat.toString())
           userEvent.type(pct, billFixture.pct.toString())
           userEvent.type(commentary, billFixture.commentary)
-          await userEvent.upload(imageSelect, file)
+          await userEvent.upload(fileSelect, file)
   
           // vérification du formulaire
           expect(select.value).toEqual(billFixture.type)
@@ -109,7 +105,7 @@ describe("Given I am connected as an employee", () => {
           newBill.fileName = file.name
   
           form.addEventListener("submit", handleSubmit)
-          userEvent.click(submitButton)
+          fireEvent.submit(form)
   
           expect(handleSubmit).toHaveBeenCalled()
   
@@ -125,6 +121,52 @@ describe("Given I am connected as an employee", () => {
           expect(key).toEqual('1234')
           expect(fileUrl).toEqual('https://localhost:3456/images/test.jpg')
         })
+      })
+    })
+
+    describe("When there isnt file name", () => {
+      test("Then i should stay on the new bill page", async () => {
+        const newBill = new NewBill({document, onNavigate, store: mockStore, localStorage: window.localStorage})
+
+        // remplir le formulaire avec un fichier valide mais sans nom
+        const billFixture = bills[0]
+        const form = screen.getByTestId("form-new-bill")
+        const handleSubmit = jest.fn(newBill.handleSubmit)
+        const fileSelect = screen.getByTestId("file")
+        const file = new File(["img"], null, {type: ["image/jpg"]})
+        const select = screen.getByRole("combobox")
+        const expense = screen.getByTestId("expense-name")
+        const amount = screen.getByTestId("amount")
+        const datepicker = screen.getByTestId("datepicker")
+        const vat = screen.getByTestId("vat")
+        const pct = screen.getByTestId("pct")
+        const commentary = screen.getByTestId("commentary")
+  
+
+        // remplir le formulaire
+        userEvent.selectOptions(select, within(select).getByRole("option", { name: billFixture.type }))
+        userEvent.type(expense, billFixture.name)
+        userEvent.type(amount, billFixture.amount.toString())
+        fireEvent.click(datepicker)
+        await wait(() => {
+          fireEvent.change(datepicker, {target: {value: billFixture.date}})
+        })
+        userEvent.type(vat, billFixture.vat.toString())
+        userEvent.type(pct, billFixture.pct.toString())
+        userEvent.type(commentary, billFixture.commentary)
+        await userEvent.upload(fileSelect, file)
+        newBill.fileName = file.name
+
+        // vérifier que le formulaire est rempli
+        expect(amount.value).toEqual( billFixture.amount.toString())
+  
+        // submit le formulaire
+        const pageTitle = document.querySelector('.content-title')
+        form.addEventListener("submit", handleSubmit)
+        fireEvent.submit(form)
+
+        expect(handleSubmit).toHaveBeenCalled()
+        expect(pageTitle).toBeTruthy()
       })
     })
     
@@ -154,12 +196,16 @@ describe("Given I am connected as an employee", () => {
           document, onNavigate, store: mockStore, localStorage: window.localStorage
         })
 
+        // créer un fichier avec un type qui ne correspond pas
         const form = screen.getByTestId("form-new-bill")
         const handleSubmit = jest.fn(newBill.handleSubmit)
-        const imageSelect = screen.getByTestId("file")
+        const fileSelect = screen.getByTestId("file")
         const file = new File(["foo"], "foo.txt", {type: ["text/plain"]})
 
-        await userEvent.upload(imageSelect, file)
+        // upload le fichier
+        await userEvent.upload(fileSelect, file)
+
+        // submit le formulaire
         const pageTitle = document.querySelector('.content-title')
         form.addEventListener("submit", handleSubmit)
         fireEvent.submit(form)
@@ -170,7 +216,6 @@ describe("Given I am connected as an employee", () => {
     })
 
     describe("When i create a new bill and an error occurs on API", () => {
-
       test("Then it fail with 404 message error", async () => {
         jest.spyOn(mockStore, "bills")
 

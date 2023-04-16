@@ -45,7 +45,7 @@ export default class NewBill {
         this.fileName = fileName
       }).catch(error => console.error(error))
     } else {
-      return
+      return false
     }
 
     
